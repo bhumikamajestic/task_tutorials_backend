@@ -15,6 +15,10 @@ return new class extends Migration
     {
         Schema::create('subjects', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('faculty_id')
+              ->constrained()
+              ->onDelete('cascade');
+            $table->string('name', 100);
             $table->timestamps();
         });
     }

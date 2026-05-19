@@ -15,6 +15,10 @@ return new class extends Migration
     {
         Schema::create('faculties', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->date('date_of_joining');
+            $table->string('qualification', 100);
+            $table->text('bio')->nullable();
             $table->timestamps();
         });
     }
