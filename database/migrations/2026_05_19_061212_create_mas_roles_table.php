@@ -8,21 +8,24 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create('mas_roles', function (Blueprint $table) {
+
+            // Primary Key
             $table->id();
+
+            // Role Name
+            $table->string('name', 50);
+
+            // created_at and updated_at
             $table->timestamps();
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
