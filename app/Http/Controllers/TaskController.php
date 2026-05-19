@@ -7,21 +7,35 @@ use App\Models\Task;
 
 class TaskController extends Controller
 {
-    // GET all tasks
     public function index()
     {
         return Task::all();
     }
 
-    // POST create task
     public function store(Request $request)
     {
-        $task = Task::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'completed' => false
-        ]);
+        return Task::create($request->all());
+    }
 
-        return response()->json($task, 201);
+    public function show($id)
+    {
+        return Task::findOrFail($id);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $task = Task::findOrFail($id);
+        $task->update($request->all());
+
+        return $task;
+    }
+
+    public function destroy($id)
+    {
+        Task::destroy($id);
+
+        return response()->json([
+            'message' => 'Task deleted successfully'
+        ]);
     }
 }
