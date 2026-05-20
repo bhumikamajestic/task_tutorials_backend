@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class MasRole extends Model
+class Recording extends Model
 {
     use HasFactory;
 
-    protected $table = 'mas_roles';
+    protected $table = 'recordings';
 
     protected $fillable = [
-        'name'
+        'class_id',
+        'topic',
+        'duration',
+        'video_link'
     ];
 
     /*
@@ -21,9 +24,9 @@ class MasRole extends Model
     |--------------------------------------------------------------------------
     */
 
-    // Mas role has many users
-    public function users()
+    // Recording belongs to class
+    public function class()
     {
-        return $this->hasMany(User::class, 'roleId');
+        return $this->belongsTo(ClassModel::class, 'class_id');
     }
 }

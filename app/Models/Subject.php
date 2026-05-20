@@ -23,12 +23,18 @@ class Subject extends Model
     // Subject belongs to one faculty
     public function faculty()
     {
-        return $this->belongsTo(Faculty::class);
+        return $this->belongsTo(Faculty::class, 'faculty_id');
     }
 
     // Subject has many classes
     public function classes()
     {
         return $this->hasMany(ClassModel::class, 'subjectId');
+    }
+
+    // Subject has many notes
+    public function notes()
+    {
+        return $this->hasMany(Note::class, 'subject_id');
     }
 }

@@ -25,13 +25,13 @@ class Faculty extends Model
     // Faculty belongs to one user
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // Faculty has many subjects
     public function subjects()
     {
-        return $this->hasMany(Subject::class);
+        return $this->hasMany(Subject::class, 'faculty_id');
     }
 
     // Faculty has many classes

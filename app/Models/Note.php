@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class MasRole extends Model
+class Note extends Model
 {
     use HasFactory;
 
-    protected $table = 'mas_roles';
+    protected $table = 'notes';
 
     protected $fillable = [
-        'name'
+        'class_id',
+        'subject_id',
+        'topic',
+        'file_url'
     ];
 
     /*
@@ -21,9 +24,15 @@ class MasRole extends Model
     |--------------------------------------------------------------------------
     */
 
-    // Mas role has many users
-    public function users()
+    // Note belongs to class
+    public function class()
     {
-        return $this->hasMany(User::class, 'roleId');
+        return $this->belongsTo(ClassModel::class, 'class_id');
+    }
+
+    // Note belongs to subject
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class, 'subject_id');
     }
 }
