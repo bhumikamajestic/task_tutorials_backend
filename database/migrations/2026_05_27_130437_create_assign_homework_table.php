@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('homeworks', function (Blueprint $table) {
+        Schema::create('assign_homeworks', function (Blueprint $table) {
 
             /*
             |--------------------------------------------------------------------------
@@ -41,44 +41,19 @@ return new class extends Migration
             |--------------------------------------------------------------------------
             */
 
-            // Homework title/topic
-
-            $table->string('topic', 100);
-
-            // Extra instructions/details
+            $table->string('topic');
 
             $table->text('description')->nullable();
-
-            /*
-            |--------------------------------------------------------------------------
-            | FILE STORAGE
-            |--------------------------------------------------------------------------
-            |
-            | Stores file path only
-            | Example:
-            | homeworks/abc123.pdf
-            |
-            */
-
-            $table->string('file')->nullable();
-
-            /*
-            |--------------------------------------------------------------------------
-            | SUBMISSION DEADLINE
-            |--------------------------------------------------------------------------
-            */
 
             $table->date('due_date')->nullable();
 
             /*
             |--------------------------------------------------------------------------
-            | HOMEWORK STATUS
+            | STATUS
             |--------------------------------------------------------------------------
             */
 
-            // active / inactive / completed
-
-            $table->string('status', 20)->default('active');
+            $table->string('status')->default('active');
 
             /*
             |--------------------------------------------------------------------------
@@ -97,6 +72,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('homeworks');
+        Schema::dropIfExists('assign_homeworks');
     }
 };

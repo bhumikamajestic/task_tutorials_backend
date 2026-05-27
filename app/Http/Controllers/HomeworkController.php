@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Homework;
 use App\Models\Enrollment;
+use App\Models\ClassModel;
+use App\Models\Faculty;
 
 class HomeworkController extends Controller
 {
@@ -17,19 +19,70 @@ class HomeworkController extends Controller
     {
         /*
         |--------------------------------------------------------------------------
-        | ADMIN GETS ALL HOMEWORK
+        | ADMIN GETS ALL HOMEWORKS
         |--------------------------------------------------------------------------
         */
 
         if (auth()->user()->roleId == 3) {
 
-            $homeworks = Homework::with(['class', 'student'])->get();
+            $homeworks = Homework::with('class')->get();
 
             return response()->json([
 
                 'success' => true,
 
                 'message' => 'All homeworks fetched successfully',
+
+                'data' => $homeworks
+
+            ], 200);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FACULTY GETS ONLY THEIR CLASS HOMEWORKS
+        |--------------------------------------------------------------------------
+        */
+
+        if (auth()->user()->roleId == 2) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | GET FACULTY RECORD
+            |--------------------------------------------------------------------------
+            */
+
+            $faculty = Faculty::where('userId', auth()->id())
+
+                ->first();
+
+            /*
+            |--------------------------------------------------------------------------
+            | GET FACULTY CLASSES
+            |--------------------------------------------------------------------------
+            */
+
+            $classIds = ClassModel::where('facultyId', $faculty->id)
+
+                ->pluck('id');
+
+            /*
+            |--------------------------------------------------------------------------
+            | GET HOMEWORKS OF FACULTY CLASSES
+            |--------------------------------------------------------------------------
+            */
+
+            $homeworks = Homework::whereIn('class_id', $classIds)
+
+                ->with('class')
+
+                ->get();
+
+            return response()->json([
+
+                'success' => true,
+
+                'message' => 'Faculty homeworks fetched successfully',
 
                 'data' => $homeworks
 
@@ -50,7 +103,7 @@ class HomeworkController extends Controller
 
         $homeworks = Homework::whereIn('class_id', $classIds)
 
-            ->with(['class', 'student'])
+            ->with('class')
 
             ->get();
 
@@ -58,7 +111,7 @@ class HomeworkController extends Controller
 
             'success' => true,
 
-            'message' => 'Homeworks fetched successfully',
+            'message' => 'Student homeworks fetched successfully',
 
             'data' => $homeworks
 
@@ -72,15 +125,97 @@ class HomeworkController extends Controller
     */
     public function store(Request $request)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDATION
+        |--------------------------------------------------------------------------
+        */
+
+        $request->validate([
+
+            'class_id' => 'required|exists:classes,id',
+
+            'topic' => 'required',
+
+            'status' => 'required'
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY ADMIN AND FACULTY CAN CREATE HOMEWORK
+        |--------------------------------------------------------------------------
+        */
+
+        if (!in_array(auth()->user()->roleId, [2, 3])) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Unauthorized access'
+
+            ], 403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FACULTY CAN ONLY CREATE FOR OWN CLASS
+        |--------------------------------------------------------------------------
+        */
+
+        if (auth()->user()->roleId == 2) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | GET FACULTY RECORD
+            |--------------------------------------------------------------------------
+            */
+
+            $faculty = Faculty::where('userId', auth()->id())
+
+                ->first();
+
+            /*
+            |--------------------------------------------------------------------------
+            | CHECK CLASS OWNERSHIP
+            |--------------------------------------------------------------------------
+            */
+
+            $class = ClassModel::where('id', $request->class_id)
+
+                ->where('facultyId', $faculty->id)
+
+                ->first();
+
+            if (!$class) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'You can only create homework for your own classes'
+
+                ], 403);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE HOMEWORK
+        |--------------------------------------------------------------------------
+        */
+
         $homework = Homework::create([
 
             'class_id' => $request->class_id,
 
-            'student_id' => $request->student_id,
-
             'topic' => $request->topic,
 
-            'status' => $request->status,
+            'description' => $request->description,
+
+            'due_date' => $request->due_date,
+
+            'status' => $request->status
         ]);
 
         return response()->json([
@@ -101,7 +236,7 @@ class HomeworkController extends Controller
     */
     public function show($id)
     {
-        $homework = Homework::with(['class', 'student'])->find($id);
+        $homework = Homework::with('class')->find($id);
 
         if (!$homework) {
 
@@ -145,15 +280,80 @@ class HomeworkController extends Controller
             ], 404);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY ADMIN AND FACULTY CAN UPDATE HOMEWORK
+        |--------------------------------------------------------------------------
+        */
+
+        if (!in_array(auth()->user()->roleId, [2, 3])) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Unauthorized access'
+
+            ], 403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FACULTY CAN ONLY UPDATE OWN CLASS HOMEWORK
+        |--------------------------------------------------------------------------
+        */
+
+        if (auth()->user()->roleId == 2) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | GET FACULTY RECORD
+            |--------------------------------------------------------------------------
+            */
+
+            $faculty = Faculty::where('userId', auth()->id())
+
+                ->first();
+
+            /*
+            |--------------------------------------------------------------------------
+            | CHECK CLASS OWNERSHIP
+            |--------------------------------------------------------------------------
+            */
+
+            $class = ClassModel::where('id', $homework->class_id)
+
+                ->where('facultyId', $faculty->id)
+
+                ->first();
+
+            if (!$class) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'You can only update your own class homework'
+
+                ], 403);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE HOMEWORK
+        |--------------------------------------------------------------------------
+        */
+
         $homework->update([
-
-            'class_id' => $request->class_id,
-
-            'student_id' => $request->student_id,
 
             'topic' => $request->topic,
 
-            'status' => $request->status,
+            'description' => $request->description,
+
+            'due_date' => $request->due_date,
+
+            'status' => $request->status
         ]);
 
         return response()->json([
@@ -186,6 +386,71 @@ class HomeworkController extends Controller
 
             ], 404);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY ADMIN AND FACULTY CAN DELETE HOMEWORK
+        |--------------------------------------------------------------------------
+        */
+
+        if (!in_array(auth()->user()->roleId, [2, 3])) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Unauthorized access'
+
+            ], 403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FACULTY CAN ONLY DELETE OWN CLASS HOMEWORK
+        |--------------------------------------------------------------------------
+        */
+
+        if (auth()->user()->roleId == 2) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | GET FACULTY RECORD
+            |--------------------------------------------------------------------------
+            */
+
+            $faculty = Faculty::where('userId', auth()->id())
+
+                ->first();
+
+            /*
+            |--------------------------------------------------------------------------
+            | CHECK CLASS OWNERSHIP
+            |--------------------------------------------------------------------------
+            */
+
+            $class = ClassModel::where('id', $homework->class_id)
+
+                ->where('facultyId', $faculty->id)
+
+                ->first();
+
+            if (!$class) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'You can only delete your own class homework'
+
+                ], 403);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE HOMEWORK
+        |--------------------------------------------------------------------------
+        */
 
         $homework->delete();
 
