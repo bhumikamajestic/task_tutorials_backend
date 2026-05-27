@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->string('email', 50)->unique();
 
-            $table->string('password', 20);
+        $table->string('password', 255);
 
             $table->char('phone_no', 10);
 

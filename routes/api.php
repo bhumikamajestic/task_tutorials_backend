@@ -1,8 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TaskController;
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\RecordingController;
@@ -13,96 +14,168 @@ use App\Http\Controllers\FacultyController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\NoteController;
 
-Route::get('/notes', [NoteController::class, 'index']);
+/*
+|--------------------------------------------------------------------------
+| PUBLIC AUTH ROUTES
+|--------------------------------------------------------------------------
+*/
 
-Route::post('/notes', [NoteController::class, 'store']);
+Route::post('/register', [AuthController::class, 'register']);
 
-Route::get('/notes/{id}', [NoteController::class, 'show']);
+Route::post('/login', [AuthController::class, 'login']);
 
-Route::put('/notes/{id}', [NoteController::class, 'update']);
+/*
+|--------------------------------------------------------------------------
+| PROTECTED ROUTES
+|--------------------------------------------------------------------------
+*/
 
-Route::delete('/notes/{id}', [NoteController::class, 'destroy']);
+Route::middleware(['auth.session.api'])->group(function () {
 
-Route::get('/subjects', [SubjectController::class, 'index']);
+    /*
+    |--------------------------------------------------------------------------
+    | COMMON AUTH ROUTES
+    |--------------------------------------------------------------------------
+    */
 
-Route::post('/subjects', [SubjectController::class, 'store']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 
-Route::get('/subjects/{id}', [SubjectController::class, 'show']);
+    Route::get('/me', [AuthController::class, 'user']);
 
-Route::put('/subjects/{id}', [SubjectController::class, 'update']);
+    /*
+    |--------------------------------------------------------------------------
+    | STUDENT ROUTES
+    |--------------------------------------------------------------------------
+    */
 
-Route::delete('/subjects/{id}', [SubjectController::class, 'destroy']);
+    Route::middleware(['isStudent'])->group(function () {
 
-Route::get('/faculties', [FacultyController::class, 'index']);
+        // NOTES
+        Route::get('/notes', [NoteController::class, 'index']);
 
-Route::post('/faculties', [FacultyController::class, 'store']);
+        Route::get('/notes/{id}', [NoteController::class, 'show']);
 
-Route::get('/faculties/{id}', [FacultyController::class, 'show']);
+        // RECORDINGS
+        Route::get('/recordings', [RecordingController::class, 'index']);
 
-Route::put('/faculties/{id}', [FacultyController::class, 'update']);
+        Route::get('/recordings/{id}', [RecordingController::class, 'show']);
 
-Route::delete('/faculties/{id}', [FacultyController::class, 'destroy']);
+        // HOMEWORKS
+        Route::get('/homeworks', [HomeworkController::class, 'index']);
 
-Route::get('/mas-roles', [MasRoleController::class, 'index']);
+        Route::get('/homeworks/{id}', [HomeworkController::class, 'show']);
 
-Route::post('/mas-roles', [MasRoleController::class, 'store']);
+        // CLASSES
+       
 
-Route::get('/mas-roles/{id}', [MasRoleController::class, 'show']);
+        Route::get('/classes/{id}', [ClassController::class, 'show']);
 
-Route::put('/mas-roles/{id}', [MasRoleController::class, 'update']);
+        // SUBJECTS
+        Route::get('/subjects', [SubjectController::class, 'index']);
 
-Route::delete('/mas-roles/{id}', [MasRoleController::class, 'destroy']);
+        Route::get('/subjects/{id}', [SubjectController::class, 'show']);
+    });
 
-Route::get('/users', [UserController::class, 'index']);
+    /*
+    |--------------------------------------------------------------------------
+    | FACULTY ROUTES
+    |--------------------------------------------------------------------------
+    */
 
-Route::post('/users', [UserController::class, 'store']);
+    Route::middleware(['isFaculty'])->group(function () {
 
-Route::get('/users/{id}', [UserController::class, 'show']);
+        // NOTES
+        Route::post('/notes', [NoteController::class, 'store']);
 
-Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::put('/notes/{id}', [NoteController::class, 'update']);
 
-Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        Route::delete('/notes/{id}', [NoteController::class, 'destroy']);
 
-Route::get('/homeworks', [HomeworkController::class, 'index']);
+        // RECORDINGS
+        Route::post('/recordings', [RecordingController::class, 'store']);
 
-Route::post('/homeworks', [HomeworkController::class, 'store']);
+        Route::put('/recordings/{id}', [RecordingController::class, 'update']);
 
-Route::get('/homeworks/{id}', [HomeworkController::class, 'show']);
+        Route::delete('/recordings/{id}', [RecordingController::class, 'destroy']);
 
-Route::put('/homeworks/{id}', [HomeworkController::class, 'update']);
+        // HOMEWORKS
+        Route::post('/homeworks', [HomeworkController::class, 'store']);
 
-Route::delete('/homeworks/{id}', [HomeworkController::class, 'destroy']);
+        Route::put('/homeworks/{id}', [HomeworkController::class, 'update']);
 
-Route::get('/recordings', [RecordingController::class, 'index']);
+        Route::delete('/homeworks/{id}', [HomeworkController::class, 'destroy']);
+    });
 
-Route::post('/recordings', [RecordingController::class, 'store']);
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN ROUTES
+    |--------------------------------------------------------------------------
+    */
 
-Route::get('/recordings/{id}', [RecordingController::class, 'show']);
+    Route::middleware(['isAdmin'])->group(function () {
 
-Route::put('/recordings/{id}', [RecordingController::class, 'update']);
+        // USERS
+        Route::get('/users', [UserController::class, 'index']);
 
-Route::delete('/recordings/{id}', [RecordingController::class, 'destroy']);
+        Route::post('/users', [UserController::class, 'store']);
 
-Route::get('/classes', [ClassController::class, 'index']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
 
-Route::post('/classes', [ClassController::class, 'store']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
 
-Route::get('/classes/{id}', [ClassController::class, 'show']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-Route::put('/classes/{id}', [ClassController::class, 'update']);
+        // STUDENTS
+        Route::get('/students', [StudentController::class, 'index']);
 
-Route::delete('/classes/{id}', [ClassController::class, 'destroy']);
+        Route::post('/students', [StudentController::class, 'store']);
 
-Route::get('/students', [StudentController::class, 'index']);
+        Route::put('/students/{id}', [StudentController::class, 'update']);
 
-Route::post('/students', [StudentController::class, 'store']);
+        Route::delete('/students/{id}', [StudentController::class, 'destroy']);
 
-Route::put('/students/{id}', [StudentController::class, 'update']);
+        // FACULTIES
+        Route::get('/faculties', [FacultyController::class, 'index']);
 
-Route::delete('/students/{id}', [StudentController::class, 'destroy']);
+        Route::post('/faculties', [FacultyController::class, 'store']);
 
-Route::apiResource('tasks', TaskController::class);
+        Route::get('/faculties/{id}', [FacultyController::class, 'show']);
 
+        Route::put('/faculties/{id}', [FacultyController::class, 'update']);
 
+        Route::delete('/faculties/{id}', [FacultyController::class, 'destroy']);
 
+        // SUBJECTS
+        Route::post('/subjects', [SubjectController::class, 'store']);
 
+        Route::put('/subjects/{id}', [SubjectController::class, 'update']);
+
+        Route::delete('/subjects/{id}', [SubjectController::class, 'destroy']);
+
+        // CLASSES
+        Route::post('/classes', [ClassController::class, 'store']);
+
+        Route::put('/classes/{id}', [ClassController::class, 'update']);
+
+        Route::delete('/classes/{id}', [ClassController::class, 'destroy']);
+
+        // MAS ROLES
+        Route::get('/mas-roles', [MasRoleController::class, 'index']);
+
+        Route::post('/mas-roles', [MasRoleController::class, 'store']);
+
+        Route::get('/mas-roles/{id}', [MasRoleController::class, 'show']);
+
+        Route::put('/mas-roles/{id}', [MasRoleController::class, 'update']);
+
+        Route::delete('/mas-roles/{id}', [MasRoleController::class, 'destroy']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | TASKS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::apiResource('tasks', TaskController::class);
+});
