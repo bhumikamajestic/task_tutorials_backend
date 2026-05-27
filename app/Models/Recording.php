@@ -12,21 +12,29 @@ class Recording extends Model
     protected $table = 'recordings';
 
     protected $fillable = [
+
         'class_id',
+
         'topic',
+
         'duration',
+
         'video_link'
     ];
 
     /*
     |--------------------------------------------------------------------------
-    | Relationships
+    | RECORDING BELONGS TO CLASS
     |--------------------------------------------------------------------------
     */
 
-    // Recording belongs to class
     public function class()
     {
-        return $this->belongsTo(ClassModel::class, 'class_id');
+        return $this->belongsTo(
+
+            ClassModel::class,
+
+            'class_id'
+        );
     }
 }

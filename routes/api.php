@@ -115,6 +115,14 @@ Route::middleware(['auth.session.api'])->group(function () {
 
         ]);
 
+        Route::get('/assign-homeworks/{id}', [
+
+            AssignHomeworkController::class,
+
+            'show'
+
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | SUBMIT HOMEWORKS
@@ -196,6 +204,14 @@ Route::middleware(['auth.session.api'])->group(function () {
 
         ]);
 
+        Route::get('/notes/{id}', [
+
+            NoteController::class,
+
+            'show'
+
+        ]);
+
         Route::post('/notes', [
 
             NoteController::class,
@@ -234,6 +250,14 @@ Route::middleware(['auth.session.api'])->group(function () {
 
         ]);
 
+        Route::get('/recordings/{id}', [
+
+            RecordingController::class,
+
+            'show'
+
+        ]);
+
         Route::post('/recordings', [
 
             RecordingController::class,
@@ -269,6 +293,14 @@ Route::middleware(['auth.session.api'])->group(function () {
             AssignHomeworkController::class,
 
             'index'
+
+        ]);
+
+        Route::get('/assign-homeworks/{id}', [
+
+            AssignHomeworkController::class,
+
+            'show'
 
         ]);
 
@@ -551,6 +583,52 @@ Route::middleware(['auth.session.api'])->group(function () {
 
         /*
         |--------------------------------------------------------------------------
+        | NOTES
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('/notes', [
+
+            NoteController::class,
+
+            'index'
+
+        ]);
+
+        Route::get('/notes/{id}', [
+
+            NoteController::class,
+
+            'show'
+
+        ]);
+
+        Route::post('/notes', [
+
+            NoteController::class,
+
+            'store'
+
+        ]);
+
+        Route::put('/notes/{id}', [
+
+            NoteController::class,
+
+            'update'
+
+        ]);
+
+        Route::delete('/notes/{id}', [
+
+            NoteController::class,
+
+            'destroy'
+
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
         | RECORDINGS
         |--------------------------------------------------------------------------
         */
@@ -563,17 +641,35 @@ Route::middleware(['auth.session.api'])->group(function () {
 
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | NOTES
-        |--------------------------------------------------------------------------
-        */
+        Route::get('/recordings/{id}', [
 
-        Route::get('/notes', [
+            RecordingController::class,
 
-            NoteController::class,
+            'show'
 
-            'index'
+        ]);
+
+        Route::post('/recordings', [
+
+            RecordingController::class,
+
+            'store'
+
+        ]);
+
+        Route::put('/recordings/{id}', [
+
+            RecordingController::class,
+
+            'update'
+
+        ]);
+
+        Route::delete('/recordings/{id}', [
+
+            RecordingController::class,
+
+            'destroy'
 
         ]);
 
@@ -588,6 +684,14 @@ Route::middleware(['auth.session.api'])->group(function () {
             AssignHomeworkController::class,
 
             'index'
+
+        ]);
+
+        Route::get('/assign-homeworks/{id}', [
+
+            AssignHomeworkController::class,
+
+            'show'
 
         ]);
 
