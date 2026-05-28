@@ -7,157 +7,223 @@ use App\Models\Student;
 
 class StudentController extends Controller
 {
-    /**
-     * GET ALL STUDENTS
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | GET ALL STUDENTS
+    |--------------------------------------------------------------------------
+    */
     public function index()
     {
-        try {
+        $students = Student::with('user')->get();
 
-            $students = Student::all();
+        return response()->json([
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Students Fetched Successfully',
-                'data' => $students
-            ], 200);
+            'success' => true,
 
-        } catch (\Exception $e) {
+            'message' => 'Students fetched successfully',
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to Fetch Students',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+            'data' => $students
+
+        ], 200);
     }
 
-    /**
-     * CREATE NEW STUDENT
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE STUDENT
+    |--------------------------------------------------------------------------
+    */
     public function store(Request $request)
     {
-        try {
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDATION
+        |--------------------------------------------------------------------------
+        */
 
-            // VALIDATION
-            $request->validate([
-                'userId' => 'required',
-                'classId' => 'required',
-                'dob' => 'required',
-                'address' => 'required',
-                'status' => 'required'
-            ]);
+        $request->validate([
 
-            // CREATE STUDENT
-            $student = Student::create([
-                'userId' => $request->userId,
-                'classId' => $request->classId,
-                'dob' => $request->dob,
-                'address' => $request->address,
-                'status' => $request->status
-            ]);
+            'userId' => 'required|exists:users,id',
+
+            'dob' => 'required|date',
+
+            'address' => 'required'
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK EXISTING STUDENT
+        |--------------------------------------------------------------------------
+        */
+
+        $existingStudent = Student::where(
+
+            'userId',
+
+            $request->userId
+
+        )->first();
+
+        if ($existingStudent) {
 
             return response()->json([
-                'success' => true,
-                'message' => 'Student Created Successfully',
-                'data' => $student
-            ], 201);
 
-        } catch (\Exception $e) {
-
-            return response()->json([
                 'success' => false,
-                'message' => 'Failed to Create Student',
-                'error' => $e->getMessage()
-            ], 500);
+
+                'message' => 'Student already exists'
+
+            ], 409);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE STUDENT
+        |--------------------------------------------------------------------------
+        */
+
+        $student = Student::create([
+
+            'userId' => $request->userId,
+
+            'dob' => $request->dob,
+
+            'address' => $request->address
+        ]);
+
+        return response()->json([
+
+            'success' => true,
+
+            'message' => 'Student created successfully',
+
+            'data' => $student
+
+        ], 201);
     }
 
-    /**
-     * UPDATE STUDENT
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | GET SINGLE STUDENT
+    |--------------------------------------------------------------------------
+    */
+    public function show($id)
+    {
+        $student = Student::with('user')
+
+            ->find($id);
+
+        if (!$student) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Student not found'
+
+            ], 404);
+        }
+
+        return response()->json([
+
+            'success' => true,
+
+            'message' => 'Student fetched successfully',
+
+            'data' => $student
+
+        ], 200);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE STUDENT
+    |--------------------------------------------------------------------------
+    */
     public function update(Request $request, $id)
     {
-        try {
+        $student = Student::find($id);
 
-            // FIND STUDENT
-            $student = Student::find($id);
-
-            // CHECK IF EXISTS
-            if (!$student) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student Not Found'
-                ], 404);
-            }
-
-            // VALIDATION
-            $request->validate([
-                'userId' => 'required',
-                'classId' => 'required',
-                'dob' => 'required',
-                'address' => 'required',
-                'status' => 'required'
-            ]);
-
-            // UPDATE STUDENT
-            $student->update([
-                'userId' => $request->userId,
-                'classId' => $request->classId,
-                'dob' => $request->dob,
-                'address' => $request->address,
-                'status' => $request->status
-            ]);
+        if (!$student) {
 
             return response()->json([
-                'success' => true,
-                'message' => 'Student Updated Successfully',
-                'data' => $student
-            ], 200);
 
-        } catch (\Exception $e) {
-
-            return response()->json([
                 'success' => false,
-                'message' => 'Failed to Update Student',
-                'error' => $e->getMessage()
-            ], 500);
+
+                'message' => 'Student not found'
+
+            ], 404);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDATION
+        |--------------------------------------------------------------------------
+        */
+
+        $request->validate([
+
+            'dob' => 'required|date',
+
+            'address' => 'required'
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE STUDENT
+        |--------------------------------------------------------------------------
+        */
+
+        $student->update([
+
+            'dob' => $request->dob,
+
+            'address' => $request->address
+        ]);
+
+        return response()->json([
+
+            'success' => true,
+
+            'message' => 'Student updated successfully',
+
+            'data' => $student
+
+        ], 200);
     }
 
-    /**
-     * DELETE STUDENT
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE STUDENT
+    |--------------------------------------------------------------------------
+    */
     public function destroy($id)
     {
-        try {
+        $student = Student::find($id);
 
-            // FIND STUDENT
-            $student = Student::find($id);
-
-            // CHECK IF EXISTS
-            if (!$student) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student Not Found'
-                ], 404);
-            }
-
-            // DELETE STUDENT
-            $student->delete();
+        if (!$student) {
 
             return response()->json([
-                'success' => true,
-                'message' => 'Student Deleted Successfully'
-            ], 200);
 
-        } catch (\Exception $e) {
-
-            return response()->json([
                 'success' => false,
-                'message' => 'Failed to Delete Student',
-                'error' => $e->getMessage()
-            ], 500);
+
+                'message' => 'Student not found'
+
+            ], 404);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE STUDENT
+        |--------------------------------------------------------------------------
+        */
+
+        $student->delete();
+
+        return response()->json([
+
+            'success' => true,
+
+            'message' => 'Student deleted successfully'
+
+        ], 200);
     }
 }

@@ -9,7 +9,19 @@ class Enrollment extends Model
 {
     use HasFactory;
 
+    /*
+    |--------------------------------------------------------------------------
+    | TABLE
+    |--------------------------------------------------------------------------
+    */
+
     protected $table = 'enrollments';
+
+    /*
+    |--------------------------------------------------------------------------
+    | MASS ASSIGNMENT
+    |--------------------------------------------------------------------------
+    */
 
     protected $fillable = [
 
@@ -30,13 +42,25 @@ class Enrollment extends Model
     |--------------------------------------------------------------------------
     */
 
+    // Enrollment belongs to user
     public function user()
     {
-        return $this->belongsTo(User::class, 'userId');
+        return $this->belongsTo(
+
+            User::class,
+
+            'userId'
+        );
     }
 
+    // Enrollment belongs to class
     public function class()
     {
-        return $this->belongsTo(ClassModel::class, 'classId');
+        return $this->belongsTo(
+
+            ClassModel::class,
+
+            'classId'
+        );
     }
 }

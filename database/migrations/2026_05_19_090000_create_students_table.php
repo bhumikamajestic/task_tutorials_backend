@@ -6,32 +6,61 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    
-    public function up(): void
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
     {
         Schema::create('students', function (Blueprint $table) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | PRIMARY KEY
+            |--------------------------------------------------------------------------
+            */
+
             $table->id();
 
-            $table->foreignId('userId')
-                  ->constrained('users')
-                  ->onDelete('cascade');
+            /*
+            |--------------------------------------------------------------------------
+            | USER RELATION
+            |--------------------------------------------------------------------------
+            */
 
-            $table->foreignId('classId')
-                  ->constrained('classes')
-                  ->onDelete('cascade');
+            $table->foreignId('userId')
+
+                ->constrained('users')
+
+                ->onDelete('cascade');
+
+            /*
+            |--------------------------------------------------------------------------
+            | STUDENT DETAILS
+            |--------------------------------------------------------------------------
+            */
 
             $table->date('dob');
 
-            $table->string('address', 100);
+            $table->string('address');
 
-            $table->enum('status', ['active', 'inactive']);
+            /*
+            |--------------------------------------------------------------------------
+            | TIMESTAMPS
+            |--------------------------------------------------------------------------
+            */
 
             $table->timestamps();
         });
     }
 
-    public function down(): void
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
     {
         Schema::dropIfExists('students');
     }

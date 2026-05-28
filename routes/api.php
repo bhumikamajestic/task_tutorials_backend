@@ -14,6 +14,7 @@ use App\Http\Controllers\RecordingController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\AssignHomeworkController;
 use App\Http\Controllers\SubmitHomeworkController;
+use App\Http\Controllers\EnrollmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,31 @@ Route::middleware(['auth.session.api'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/me', [AuthController::class, 'user']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | ENROLLMENT ROUTES
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware(['isStudent'])->group(function () {
+
+        Route::post('/enrollments', [
+
+            EnrollmentController::class,
+
+            'store'
+
+        ]);
+
+        Route::get('/enrollments/{id}', [
+
+            EnrollmentController::class,
+
+            'show'
+
+        ]);
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -438,6 +464,36 @@ Route::middleware(['auth.session.api'])->group(function () {
         Route::delete('/students/{id}', [
 
             StudentController::class,
+
+            'destroy'
+
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | ENROLLMENTS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('/enrollments', [
+
+            EnrollmentController::class,
+
+            'index'
+
+        ]);
+
+        Route::put('/enrollments/{id}', [
+
+            EnrollmentController::class,
+
+            'update'
+
+        ]);
+
+        Route::delete('/enrollments/{id}', [
+
+            EnrollmentController::class,
 
             'destroy'
 

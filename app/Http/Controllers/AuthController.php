@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\MasRole;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -225,8 +226,11 @@ class AuthController extends Controller
         */
 
         if (!Auth::attempt([
+
             'email' => $request->email,
+
             'password' => $request->password
+
         ])) {
 
             return response()->json([
@@ -256,6 +260,58 @@ class AuthController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | DEFAULT ACCESS
+        |--------------------------------------------------------------------------
+        */
+
+        $hasAccess = false;
+
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN ALWAYS HAS ACCESS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($user->roleId == 3) {
+
+            $hasAccess = true;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FACULTY ALWAYS HAS ACCESS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($user->roleId == 2) {
+
+            $hasAccess = true;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | STUDENT ACCESS CHECK
+        |--------------------------------------------------------------------------
+        */
+
+        if ($user->roleId == 1) {
+
+            $student = Student::where(
+
+                'userId',
+
+                $user->id
+
+            )->first();
+
+            if ($student) {
+
+                $hasAccess = true;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | SUCCESS RESPONSE
         |--------------------------------------------------------------------------
         */
@@ -270,7 +326,7 @@ class AuthController extends Controller
 
                 'user' => $user,
 
-                'has_access' => false
+                'has_access' => $hasAccess
             ]
 
         ], 200);

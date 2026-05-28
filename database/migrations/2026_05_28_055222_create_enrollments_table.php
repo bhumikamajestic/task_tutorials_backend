@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateEnrollmentsTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -15,21 +15,41 @@ class CreateEnrollmentsTable extends Migration
     {
         Schema::create('enrollments', function (Blueprint $table) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | PRIMARY KEY
+            |--------------------------------------------------------------------------
+            */
+
             $table->id();
 
             /*
             |--------------------------------------------------------------------------
-            | RELATIONS
+            | USER RELATION
             |--------------------------------------------------------------------------
             */
 
-            $table->unsignedBigInteger('userId');
+            $table->foreignId('userId')
 
-            $table->unsignedBigInteger('classId');
+                ->constrained('users')
+
+                ->onDelete('cascade');
 
             /*
             |--------------------------------------------------------------------------
-            | STUDENT FORM DATA
+            | CLASS RELATION
+            |--------------------------------------------------------------------------
+            */
+
+            $table->foreignId('classId')
+
+                ->constrained('classes')
+
+                ->onDelete('cascade');
+
+            /*
+            |--------------------------------------------------------------------------
+            | STUDENT DETAILS
             |--------------------------------------------------------------------------
             */
 
@@ -60,36 +80,6 @@ class CreateEnrollmentsTable extends Migration
             */
 
             $table->timestamps();
-
-            /*
-            |--------------------------------------------------------------------------
-            | FOREIGN KEYS
-            |--------------------------------------------------------------------------
-            */
-
-            $table->foreign('userId')
-
-                ->references('id')
-
-                ->on('users')
-
-                ->onDelete('cascade');
-
-            $table->foreign('classId')
-
-                ->references('id')
-
-                ->on('classes')
-
-                ->onDelete('cascade');
-
-            /*
-            |--------------------------------------------------------------------------
-            | PREVENT DUPLICATE ENROLLMENT
-            |--------------------------------------------------------------------------
-            */
-
-            $table->unique(['userId', 'classId']);
         });
     }
 
@@ -102,4 +92,4 @@ class CreateEnrollmentsTable extends Migration
     {
         Schema::dropIfExists('enrollments');
     }
-}
+};
