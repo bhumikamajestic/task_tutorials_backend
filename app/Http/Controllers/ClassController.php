@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ClassModel;
+use App\Models\Enollment;
 
 class ClassController extends Controller
 {
@@ -128,3 +129,32 @@ class ClassController extends Controller
         ], 200);
     }
 }
+
+public function myClasses()
+{
+    $classes = Enrollment::where(
+        'user_id',
+        auth()->id()
+    )
+    ->where(
+        'status',
+        'approved'
+    )
+    ->with([
+        'class.subject',
+        'class.faculty.user'
+    ])
+    ->get()
+    ->pluck('class');
+
+    return response()->json([
+
+        'success' => true,
+
+        'message' => 'My classes fetched successfully',
+
+        'data' => $classes
+
+    ], 200);
+}
+

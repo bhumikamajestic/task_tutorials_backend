@@ -17,25 +17,20 @@ class User extends Authenticatable
         'phone_no'
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
+    protected $hidden = [
+        'password',
+    ];
 
-    // User belongs to mas role
     public function masRole()
     {
         return $this->belongsTo(MasRole::class, 'role_id');
     }
 
-    // User has one student
     public function student()
     {
         return $this->hasOne(Student::class, 'user_id');
     }
 
-    // User has one faculty
     public function faculty()
     {
         return $this->hasOne(Faculty::class, 'user_id');
