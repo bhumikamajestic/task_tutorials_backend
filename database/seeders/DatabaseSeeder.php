@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
 
             EnrollmentSeeder::class,
              NoteSeeder::class,
+             RecordingSeeder::class,
         ]);
     }
 }

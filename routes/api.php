@@ -93,6 +93,15 @@ Route::get(
 
     ])->group(function () {
 
+
+        Route::get('/classes/{class_id}/recordings', [RecordingController::class, 'studentClassRecordings']);
+Route::get('/recordings/{id}', [RecordingController::class, 'studentShow']);
+
+
+
+
+
+
         /*
         |--------------------------------------------------------------------------
         | NOTES
@@ -236,6 +245,16 @@ Route::get(
 
     Route::middleware(['isFaculty'])->group(function () {
 
+
+Route::get('/faculty/classes/{class_id}/recordings', [RecordingController::class, 'facultyClassRecordings']);
+Route::post('/faculty/classes/{class_id}/recordings', [RecordingController::class, 'facultyStoreInClass']);
+Route::put('/faculty/recordings/{id}', [RecordingController::class, 'facultyUpdate']);
+Route::delete('/faculty/recordings/{id}', [RecordingController::class, 'facultyDestroy']);
+
+
+
+
+
         /*
         |--------------------------------------------------------------------------
         | NOTES
@@ -369,7 +388,7 @@ Route::get(
         Route::delete('/assign-homeworks/{id}', [
 
             AssignHomeworkController::class,
-
+            
             'destroy'
 
         ]);
@@ -404,6 +423,17 @@ Route::get(
     */
 
     Route::middleware(['isAdmin'])->group(function () {
+
+   Route::get('/admin/recordings', [RecordingController::class, 'adminIndex']);
+Route::get('/admin/recordings/{id}', [RecordingController::class, 'adminShow']);
+Route::post('/admin/recordings', [RecordingController::class, 'adminStore']);
+Route::put('/admin/recordings/{id}', [RecordingController::class, 'adminUpdate']);
+Route::delete('/admin/recordings/{id}', [RecordingController::class, 'adminDestroy']);
+
+
+
+
+
 
         /*
         |--------------------------------------------------------------------------
