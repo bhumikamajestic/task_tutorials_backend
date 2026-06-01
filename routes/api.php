@@ -52,6 +52,16 @@ Route::middleware(['auth.session.api'])->group(function () {
 
     Route::middleware(['isStudent'])->group(function () {
 
+
+
+Route::get(
+    '/classes/{id}/notes',
+    [NoteController::class, 'classNotes']
+);
+
+
+
+
         Route::post('/enrollments', [
 
             EnrollmentController::class,
@@ -88,6 +98,16 @@ Route::middleware(['auth.session.api'])->group(function () {
         | NOTES
         |--------------------------------------------------------------------------
         */
+
+
+        Route::get('/my-classes', [
+       ClassController::class,
+
+            'myClasses'
+
+
+]);
+
 
         Route::get('/notes', [
 

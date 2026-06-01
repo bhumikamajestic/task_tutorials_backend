@@ -115,5 +115,6 @@ class Kernel extends HttpKernel
         'isFaculty' => \App\Http\Middleware\IsFaculty::class,
 
         'isAdmin' => \App\Http\Middleware\IsAdmin::class,
+        'hasAccess' => \App\Http\Middleware\HasAccess::class,
     ];
 }

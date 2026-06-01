@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ClassModel;
-use App\Models\Enollment;
+use App\Models\Enrollment;
 
 class ClassController extends Controller
 {
@@ -110,24 +110,23 @@ class ClassController extends Controller
     | DELETE CLASS
     |--------------------------------------------------------------------------
     */
-    public function destroy($id)
-    {
-        $class = ClassModel::find($id);
+   public function destroy($id)
+{
+    $class = ClassModel::find($id);
 
-        if (!$class) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Class not found'
-            ], 404);
-        }
-
-        $class->delete();
-
+    if (!$class) {
         return response()->json([
-            'success' => true,
-            'message' => 'Class deleted successfully'
-        ], 200);
+            'success' => false,
+            'message' => 'Class not found'
+        ], 404);
     }
+
+    $class->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Class deleted successfully'
+    ], 200);
 }
 
 public function myClasses()
@@ -148,13 +147,9 @@ public function myClasses()
     ->pluck('class');
 
     return response()->json([
-
         'success' => true,
-
         'message' => 'My classes fetched successfully',
-
         'data' => $classes
-
     ], 200);
 }
-
+}

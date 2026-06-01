@@ -513,4 +513,51 @@ class NoteController extends Controller
 
         ], 200);
     }
+    public function classNotes($classId)
+{
+    $enrollment = Enrollment::where(
+        'user_id',
+        auth()->id()
+    )
+    ->where(
+        'class_id',
+        $classId
+    )
+    ->where(
+        'status',
+        'approved'
+    )
+    ->first();
+
+    if (!$enrollment) {
+
+        return response()->json([
+
+            'success' => false,
+
+            'message' => 'Unauthorized access'
+
+        ], 403);
+    }
+
+    $notes = Note::where(
+        'class_id',
+        $classId
+    )
+    ->with([
+        'class',
+        'subject'
+    ])
+    ->get();
+
+    return response()->json([
+
+        'success' => true,
+
+        'message' => 'Class notes fetched successfully',
+
+        'data' => $notes
+
+    ], 200);
+}
 }
