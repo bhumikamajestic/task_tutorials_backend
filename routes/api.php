@@ -23,12 +23,11 @@ use App\Http\Controllers\EnrollmentController;
 */
 
 Route::post('/register', [AuthController::class, 'register']);
-
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login',    [AuthController::class, 'login']);
 
 /*
 |--------------------------------------------------------------------------
-| PROTECTED ROUTES
+| PROTECTED ROUTES (SESSION AUTH)
 |--------------------------------------------------------------------------
 */
 
@@ -41,200 +40,98 @@ Route::middleware(['auth.session.api'])->group(function () {
     */
 
     Route::post('/logout', [AuthController::class, 'logout']);
-
-    Route::get('/me', [AuthController::class, 'user']);
+    Route::get('/me',      [AuthController::class, 'user']);
 
     /*
     |--------------------------------------------------------------------------
-    | ENROLLMENT ROUTES
+    | STUDENT: ENROLLMENT REQUEST FLOW
+    | - Student can request enrollment
+    | - Student can view their enrollment request by id
     |--------------------------------------------------------------------------
     */
 
     Route::middleware(['isStudent'])->group(function () {
 
+        // Student can fetch notes for a particular class (you already created classNotes)
+        Route::get('/classes/{id}/notes', [NoteController::class, 'classNotes']);
 
-
-Route::get(
-    '/classes/{id}/notes',
-    [NoteController::class, 'classNotes']
-);
-
-
-
-
-        Route::post('/enrollments', [
-
-            EnrollmentController::class,
-
-            'store'
-
-        ]);
-
-        Route::get('/enrollments/{id}', [
-
-            EnrollmentController::class,
-
-            'show'
-
-        ]);
+        Route::post('/enrollments',      [EnrollmentController::class, 'store']);
+        Route::get('/enrollments/{id}',  [EnrollmentController::class, 'show']);
     });
 
     /*
     |--------------------------------------------------------------------------
-    | STUDENT ROUTES
+    | STUDENT: AFTER ACCESS GRANTED (hasAccess)
     |--------------------------------------------------------------------------
     */
 
-    Route::middleware([
-
-        'isStudent',
-
-        'hasAccess'
-
-    ])->group(function () {
-
-
-        Route::get('/classes/{class_id}/recordings', [RecordingController::class, 'studentClassRecordings']);
-Route::get('/recordings/{id}', [RecordingController::class, 'studentShow']);
-
-
-
-
-
+    Route::middleware(['isStudent', 'hasAccess'])->group(function () {
 
         /*
         |--------------------------------------------------------------------------
-        | NOTES
+        | CLASSES (Student Dashboard)
         |--------------------------------------------------------------------------
         */
 
+        // Student gets only enrolled+approved classes (your myClasses() uses enrollments)
+        Route::get('/my-classes', [ClassController::class, 'myClasses']);
 
-        Route::get('/my-classes', [
-       ClassController::class,
-
-            'myClasses'
-
-
-]);
-
-
-        Route::get('/notes', [
-
-            NoteController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/notes/{id}', [
-
-            NoteController::class,
-
-            'show'
-
-        ]);
+        // Optional: student can open a single class details page
+        Route::get('/classes/{id}', [ClassController::class, 'show']);
 
         /*
         |--------------------------------------------------------------------------
-        | RECORDINGS
+        | NOTES (Student)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/recordings', [
-
-            RecordingController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/recordings/{id}', [
-
-            RecordingController::class,
-
-            'show'
-
-        ]);
+        // Student sees notes for ALL their approved classes (your NoteController@index)
+        Route::get('/notes',      [NoteController::class, 'index']);
+        Route::get('/notes/{id}', [NoteController::class, 'show']);
 
         /*
         |--------------------------------------------------------------------------
-        | ASSIGN HOMEWORKS
+        | RECORDINGS (Student)  ✅ FIXED (no conflict now)
         |--------------------------------------------------------------------------
+        | Student must choose a class first, then fetch recordings of that class only.
         */
 
-        Route::get('/assign-homeworks', [
+        Route::get(
+            '/classes/{class_id}/recordings',
+            [RecordingController::class, 'studentClassRecordings']
+        );
 
-            AssignHomeworkController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/assign-homeworks/{id}', [
-
-            AssignHomeworkController::class,
-
-            'show'
-
-        ]);
+        Route::get(
+            '/student/recordings/{id}',
+            [RecordingController::class, 'studentShow']
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | SUBMIT HOMEWORKS
+        | ASSIGN HOMEWORKS (Student)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/submit-homeworks', [
-
-            SubmitHomeworkController::class,
-
-            'index'
-
-        ]);
-
-        Route::post('/submit-homeworks', [
-
-            SubmitHomeworkController::class,
-
-            'store'
-
-        ]);
+        Route::get('/assign-homeworks',      [AssignHomeworkController::class, 'index']);
+        Route::get('/assign-homeworks/{id}', [AssignHomeworkController::class, 'show']);
 
         /*
         |--------------------------------------------------------------------------
-        | CLASSES
+        | SUBMIT HOMEWORKS (Student)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/classes/{id}', [
-
-            ClassController::class,
-
-            'show'
-
-        ]);
+        Route::get('/submit-homeworks', [SubmitHomeworkController::class, 'index']);
+        Route::post('/submit-homeworks',[SubmitHomeworkController::class, 'store']);
 
         /*
         |--------------------------------------------------------------------------
-        | SUBJECTS
+        | SUBJECTS (Student)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/subjects', [
-
-            SubjectController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/subjects/{id}', [
-
-            SubjectController::class,
-
-            'show'
-
-        ]);
+        Route::get('/subjects',      [SubjectController::class, 'index']);
+        Route::get('/subjects/{id}', [SubjectController::class, 'show']);
     });
 
     /*
@@ -245,175 +142,69 @@ Route::get('/recordings/{id}', [RecordingController::class, 'studentShow']);
 
     Route::middleware(['isFaculty'])->group(function () {
 
-
-Route::get('/faculty/classes/{class_id}/recordings', [RecordingController::class, 'facultyClassRecordings']);
-Route::post('/faculty/classes/{class_id}/recordings', [RecordingController::class, 'facultyStoreInClass']);
-Route::put('/faculty/recordings/{id}', [RecordingController::class, 'facultyUpdate']);
-Route::delete('/faculty/recordings/{id}', [RecordingController::class, 'facultyDestroy']);
-
-
-
-
-
         /*
         |--------------------------------------------------------------------------
-        | NOTES
+        | RECORDINGS (Faculty) ✅ FIXED (no conflict now)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/notes', [
+        Route::get(
+            '/faculty/classes/{class_id}/recordings',
+            [RecordingController::class, 'facultyClassRecordings']
+        );
 
-            NoteController::class,
+        Route::post(
+            '/faculty/classes/{class_id}/recordings',
+            [RecordingController::class, 'facultyStoreInClass']
+        );
 
-            'index'
+        Route::get(
+            '/faculty/recordings/{id}',
+            [RecordingController::class, 'facultyShow'] // make sure this method exists
+        );
 
-        ]);
+        Route::put(
+            '/faculty/recordings/{id}',
+            [RecordingController::class, 'facultyUpdate']
+        );
 
-        Route::get('/notes/{id}', [
-
-            NoteController::class,
-
-            'show'
-
-        ]);
-
-        Route::post('/notes', [
-
-            NoteController::class,
-
-            'store'
-
-        ]);
-
-        Route::put('/notes/{id}', [
-
-            NoteController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/notes/{id}', [
-
-            NoteController::class,
-
-            'destroy'
-
-        ]);
+        Route::delete(
+            '/faculty/recordings/{id}',
+            [RecordingController::class, 'facultyDestroy']
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | RECORDINGS
+        | NOTES (Faculty)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/recordings', [
-
-            RecordingController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/recordings/{id}', [
-
-            RecordingController::class,
-
-            'show'
-
-        ]);
-
-        Route::post('/recordings', [
-
-            RecordingController::class,
-
-            'store'
-
-        ]);
-
-        Route::put('/recordings/{id}', [
-
-            RecordingController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/recordings/{id}', [
-
-            RecordingController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/notes',        [NoteController::class, 'index']);
+        Route::get('/notes/{id}',   [NoteController::class, 'show']);
+        Route::post('/notes',       [NoteController::class, 'store']);
+        Route::put('/notes/{id}',   [NoteController::class, 'update']);
+        Route::delete('/notes/{id}',[NoteController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
-        | ASSIGN HOMEWORKS
+        | ASSIGN HOMEWORKS (Faculty)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/assign-homeworks', [
-
-            AssignHomeworkController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/assign-homeworks/{id}', [
-
-            AssignHomeworkController::class,
-
-            'show'
-
-        ]);
-
-        Route::post('/assign-homeworks', [
-
-            AssignHomeworkController::class,
-
-            'store'
-
-        ]);
-
-        Route::put('/assign-homeworks/{id}', [
-
-            AssignHomeworkController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/assign-homeworks/{id}', [
-
-            AssignHomeworkController::class,
-            
-            'destroy'
-
-        ]);
+        Route::get('/assign-homeworks',       [AssignHomeworkController::class, 'index']);
+        Route::get('/assign-homeworks/{id}',  [AssignHomeworkController::class, 'show']);
+        Route::post('/assign-homeworks',      [AssignHomeworkController::class, 'store']);
+        Route::put('/assign-homeworks/{id}',  [AssignHomeworkController::class, 'update']);
+        Route::delete('/assign-homeworks/{id}',[AssignHomeworkController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
-        | SUBMIT HOMEWORKS
+        | SUBMIT HOMEWORKS (Faculty)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/submit-homeworks', [
-
-            SubmitHomeworkController::class,
-
-            'index'
-
-        ]);
-
-        Route::put('/submit-homeworks/{id}', [
-
-            SubmitHomeworkController::class,
-
-            'update'
-
-        ]);
+        Route::get('/submit-homeworks',      [SubmitHomeworkController::class, 'index']);
+        Route::put('/submit-homeworks/{id}', [SubmitHomeworkController::class, 'update']);
     });
 
     /*
@@ -424,16 +215,17 @@ Route::delete('/faculty/recordings/{id}', [RecordingController::class, 'facultyD
 
     Route::middleware(['isAdmin'])->group(function () {
 
-   Route::get('/admin/recordings', [RecordingController::class, 'adminIndex']);
-Route::get('/admin/recordings/{id}', [RecordingController::class, 'adminShow']);
-Route::post('/admin/recordings', [RecordingController::class, 'adminStore']);
-Route::put('/admin/recordings/{id}', [RecordingController::class, 'adminUpdate']);
-Route::delete('/admin/recordings/{id}', [RecordingController::class, 'adminDestroy']);
+        /*
+        |--------------------------------------------------------------------------
+        | RECORDINGS (Admin) ✅ FIXED (no conflict now)
+        |--------------------------------------------------------------------------
+        */
 
-
-
-
-
+        Route::get('/admin/recordings',        [RecordingController::class, 'adminIndex']);
+        Route::get('/admin/recordings/{id}',   [RecordingController::class, 'adminShow']);
+        Route::post('/admin/recordings',       [RecordingController::class, 'adminStore']);
+        Route::put('/admin/recordings/{id}',   [RecordingController::class, 'adminUpdate']);
+        Route::delete('/admin/recordings/{id}',[RecordingController::class, 'adminDestroy']);
 
         /*
         |--------------------------------------------------------------------------
@@ -441,45 +233,11 @@ Route::delete('/admin/recordings/{id}', [RecordingController::class, 'adminDestr
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/users', [
-
-            UserController::class,
-
-            'index'
-
-        ]);
-
-        Route::post('/users', [
-
-            UserController::class,
-
-            'store'
-
-        ]);
-
-        Route::get('/users/{id}', [
-
-            UserController::class,
-
-            'show'
-
-        ]);
-
-        Route::put('/users/{id}', [
-
-            UserController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/users/{id}', [
-
-            UserController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/users',        [UserController::class, 'index']);
+        Route::post('/users',       [UserController::class, 'store']);
+        Route::get('/users/{id}',   [UserController::class, 'show']);
+        Route::put('/users/{id}',   [UserController::class, 'update']);
+        Route::delete('/users/{id}',[UserController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
@@ -487,67 +245,20 @@ Route::delete('/admin/recordings/{id}', [RecordingController::class, 'adminDestr
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/students', [
-
-            StudentController::class,
-
-            'index'
-
-        ]);
-
-        Route::post('/students', [
-
-            StudentController::class,
-
-            'store'
-
-        ]);
-
-        Route::put('/students/{id}', [
-
-            StudentController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/students/{id}', [
-
-            StudentController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/students',         [StudentController::class, 'index']);
+        Route::post('/students',        [StudentController::class, 'store']);
+        Route::put('/students/{id}',    [StudentController::class, 'update']);
+        Route::delete('/students/{id}', [StudentController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
-        | ENROLLMENTS
+        | ENROLLMENTS (Admin approves/rejects)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/enrollments', [
-
-            EnrollmentController::class,
-
-            'index'
-
-        ]);
-
-        Route::put('/enrollments/{id}', [
-
-            EnrollmentController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/enrollments/{id}', [
-
-            EnrollmentController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/enrollments',          [EnrollmentController::class, 'index']);
+        Route::put('/enrollments/{id}',     [EnrollmentController::class, 'update']);
+        Route::delete('/enrollments/{id}',  [EnrollmentController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
@@ -555,45 +266,11 @@ Route::delete('/admin/recordings/{id}', [RecordingController::class, 'adminDestr
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/faculties', [
-
-            FacultyController::class,
-
-            'index'
-
-        ]);
-
-        Route::post('/faculties', [
-
-            FacultyController::class,
-
-            'store'
-
-        ]);
-
-        Route::get('/faculties/{id}', [
-
-            FacultyController::class,
-
-            'show'
-
-        ]);
-
-        Route::put('/faculties/{id}', [
-
-            FacultyController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/faculties/{id}', [
-
-            FacultyController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/faculties',         [FacultyController::class, 'index']);
+        Route::post('/faculties',        [FacultyController::class, 'store']);
+        Route::get('/faculties/{id}',    [FacultyController::class, 'show']);
+        Route::put('/faculties/{id}',    [FacultyController::class, 'update']);
+        Route::delete('/faculties/{id}', [FacultyController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
@@ -601,45 +278,11 @@ Route::delete('/admin/recordings/{id}', [RecordingController::class, 'adminDestr
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/subjects', [
-
-            SubjectController::class,
-
-            'index'
-
-        ]);
-
-        Route::post('/subjects', [
-
-            SubjectController::class,
-
-            'store'
-
-        ]);
-
-        Route::get('/subjects/{id}', [
-
-            SubjectController::class,
-
-            'show'
-
-        ]);
-
-        Route::put('/subjects/{id}', [
-
-            SubjectController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/subjects/{id}', [
-
-            SubjectController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/subjects',         [SubjectController::class, 'index']);
+        Route::post('/subjects',        [SubjectController::class, 'store']);
+        Route::get('/subjects/{id}',    [SubjectController::class, 'show']);
+        Route::put('/subjects/{id}',    [SubjectController::class, 'update']);
+        Route::delete('/subjects/{id}', [SubjectController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
@@ -647,205 +290,44 @@ Route::delete('/admin/recordings/{id}', [RecordingController::class, 'adminDestr
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/classes', [
-
-            ClassController::class,
-
-            'index'
-
-        ]);
-
-        Route::post('/classes', [
-
-            ClassController::class,
-
-            'store'
-
-        ]);
-
-        Route::get('/classes/{id}', [
-
-            ClassController::class,
-
-            'show'
-
-        ]);
-
-        Route::put('/classes/{id}', [
-
-            ClassController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/classes/{id}', [
-
-            ClassController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/classes',         [ClassController::class, 'index']);
+        Route::post('/classes',        [ClassController::class, 'store']);
+        Route::get('/classes/{id}',    [ClassController::class, 'show']);
+        Route::put('/classes/{id}',    [ClassController::class, 'update']);
+        Route::delete('/classes/{id}', [ClassController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
-        | NOTES
+        | NOTES (Admin)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/notes', [
-
-            NoteController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/notes/{id}', [
-
-            NoteController::class,
-
-            'show'
-
-        ]);
-
-        Route::post('/notes', [
-
-            NoteController::class,
-
-            'store'
-
-        ]);
-
-        Route::put('/notes/{id}', [
-
-            NoteController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/notes/{id}', [
-
-            NoteController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/notes',          [NoteController::class, 'index']);
+        Route::get('/notes/{id}',     [NoteController::class, 'show']);
+        Route::post('/notes',         [NoteController::class, 'store']);
+        Route::put('/notes/{id}',     [NoteController::class, 'update']);
+        Route::delete('/notes/{id}',  [NoteController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
-        | RECORDINGS
+        | ASSIGN HOMEWORKS (Admin)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/recordings', [
-
-            RecordingController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/recordings/{id}', [
-
-            RecordingController::class,
-
-            'show'
-
-        ]);
-
-        Route::post('/recordings', [
-
-            RecordingController::class,
-
-            'store'
-
-        ]);
-
-        Route::put('/recordings/{id}', [
-
-            RecordingController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/recordings/{id}', [
-
-            RecordingController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/assign-homeworks',        [AssignHomeworkController::class, 'index']);
+        Route::get('/assign-homeworks/{id}',   [AssignHomeworkController::class, 'show']);
+        Route::post('/assign-homeworks',       [AssignHomeworkController::class, 'store']);
+        Route::put('/assign-homeworks/{id}',   [AssignHomeworkController::class, 'update']);
+        Route::delete('/assign-homeworks/{id}',[AssignHomeworkController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------
-        | ASSIGN HOMEWORKS
+        | SUBMIT HOMEWORKS (Admin can review/update if you want)
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/assign-homeworks', [
-
-            AssignHomeworkController::class,
-
-            'index'
-
-        ]);
-
-        Route::get('/assign-homeworks/{id}', [
-
-            AssignHomeworkController::class,
-
-            'show'
-
-        ]);
-
-        Route::post('/assign-homeworks', [
-
-            AssignHomeworkController::class,
-
-            'store'
-
-        ]);
-
-        Route::put('/assign-homeworks/{id}', [
-
-            AssignHomeworkController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/assign-homeworks/{id}', [
-
-            AssignHomeworkController::class,
-
-            'destroy'
-
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | SUBMIT HOMEWORKS
-        |--------------------------------------------------------------------------
-        */
-
-        Route::get('/submit-homeworks', [
-
-            SubmitHomeworkController::class,
-
-            'index'
-
-        ]);
-
-        Route::put('/submit-homeworks/{id}', [
-
-            SubmitHomeworkController::class,
-
-            'update'
-
-        ]);
+        Route::get('/submit-homeworks',      [SubmitHomeworkController::class, 'index']);
+        Route::put('/submit-homeworks/{id}', [SubmitHomeworkController::class, 'update']);
 
         /*
         |--------------------------------------------------------------------------
@@ -853,50 +335,16 @@ Route::delete('/admin/recordings/{id}', [RecordingController::class, 'adminDestr
         |--------------------------------------------------------------------------
         */
 
-        Route::get('/mas-roles', [
-
-            MasRoleController::class,
-
-            'index'
-
-        ]);
-
-        Route::post('/mas-roles', [
-
-            MasRoleController::class,
-
-            'store'
-
-        ]);
-
-        Route::get('/mas-roles/{id}', [
-
-            MasRoleController::class,
-
-            'show'
-
-        ]);
-
-        Route::put('/mas-roles/{id}', [
-
-            MasRoleController::class,
-
-            'update'
-
-        ]);
-
-        Route::delete('/mas-roles/{id}', [
-
-            MasRoleController::class,
-
-            'destroy'
-
-        ]);
+        Route::get('/mas-roles',         [MasRoleController::class, 'index']);
+        Route::post('/mas-roles',        [MasRoleController::class, 'store']);
+        Route::get('/mas-roles/{id}',    [MasRoleController::class, 'show']);
+        Route::put('/mas-roles/{id}',    [MasRoleController::class, 'update']);
+        Route::delete('/mas-roles/{id}', [MasRoleController::class, 'destroy']);
     });
 
     /*
     |--------------------------------------------------------------------------
-    | TASKS
+    | TASKS (Keep as is)
     |--------------------------------------------------------------------------
     */
 

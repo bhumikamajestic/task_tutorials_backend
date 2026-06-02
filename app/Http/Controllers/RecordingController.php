@@ -50,6 +50,7 @@ class RecordingController extends Controller
     // POST /admin/recordings
     public function adminStore(Request $request)
     {
+      
         $request->validate([
             'class_id' => 'required|exists:classes,id',
             'topic' => 'required|string|max:100',
