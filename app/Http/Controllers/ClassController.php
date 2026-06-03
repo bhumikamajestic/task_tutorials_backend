@@ -151,5 +151,37 @@ public function myClasses()
         'message' => 'My classes fetched successfully',
         'data' => $classes
     ], 200);
+
+}
+public function facultyClasses()
+{
+    $faculty = \App\Models\Faculty::where(
+        'user_id',
+        auth()->id()
+    )->first();
+
+    if (!$faculty) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Faculty profile not found'
+        ], 404);
+    }
+
+    $classes = ClassModel::where(
+        'faculty_id',
+        $faculty->id
+    )
+    ->with([
+        'subject',
+        'faculty.user'
+    ])
+    ->get();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Faculty classes fetched successfully',
+        'data' => $classes
+    ], 200);
 }
 }

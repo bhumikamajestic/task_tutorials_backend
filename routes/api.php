@@ -142,6 +142,13 @@ Route::middleware(['auth.session.api'])->group(function () {
 
     Route::middleware(['isFaculty'])->group(function () {
 
+
+        //check my classses 
+
+      Route::get(
+    '/faculty/my-classes',
+    [ClassController::class, 'facultyClasses']
+);
         /*
         |--------------------------------------------------------------------------
         | RECORDINGS (Faculty) ✅ FIXED (no conflict now)

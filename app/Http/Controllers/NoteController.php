@@ -143,121 +143,144 @@ class NoteController extends Controller
     | CREATE NOTE
     |--------------------------------------------------------------------------
     */
-    public function store(Request $request)
-    {
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATION
-        |--------------------------------------------------------------------------
-        */
+   public function store(Request $request)
+{
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
 
-        $request->validate([
+    $request->validate([
 
-            'class_id' => 'required|exists:classes,id',
+        'class_id' => 'required|exists:classes,id',
 
-            'subject_id' => 'required|exists:subjects,id',
+        'subject_id' => 'required|exists:subjects,id',
 
-            'topic' => 'required',
+        'topic' => 'required',
 
-            'file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx'
-        ]);
+        'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx',
 
-        /*
-        |--------------------------------------------------------------------------
-        | ONLY ADMIN AND FACULTY CAN CREATE
-        |--------------------------------------------------------------------------
-        */
+          'file_url' => 'nullable|url'
+    ]);
 
-        if (!in_array(auth()->user()->role_id, [2, 3])) {
+    if (
+        !$request->hasFile('file') &&
+        !$request->filled('file_url')
+    ) {
+
+        return response()->json([
+
+            'success' => false,
+
+            'message' => 'Either file or file_url is required'
+
+        ], 422);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ONLY ADMIN AND FACULTY CAN CREATE
+    |--------------------------------------------------------------------------
+    */
+
+    if (!in_array(auth()->user()->role_id, [2, 3])) {
+
+        return response()->json([
+
+            'success' => false,
+
+            'message' => 'Unauthorized access'
+
+        ], 403);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FACULTY CAN ONLY CREATE OWN CLASS NOTES
+    |--------------------------------------------------------------------------
+    */
+
+    if (auth()->user()->role_id == 2) {
+
+        $faculty = Faculty::where(
+
+            'user_id',
+
+            auth()->id()
+
+        )->first();
+
+        $class = ClassModel::where(
+
+            'id',
+
+            $request->class_id
+
+        )->where(
+
+            'faculty_id',
+
+            $faculty->id
+
+        )->first();
+
+        if (!$class) {
 
             return response()->json([
 
                 'success' => false,
 
-                'message' => 'Unauthorized access'
+                'message' => 'You can only upload notes for your own classes'
 
             ], 403);
         }
+    }
 
-        /*
-        |--------------------------------------------------------------------------
-        | FACULTY CAN ONLY CREATE OWN CLASS NOTES
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | STORE FILE OR URL
+    |--------------------------------------------------------------------------
+    */
 
-        if (auth()->user()->role_id == 2) {
-
-            $faculty = Faculty::where(
-
-                'user_id',
-
-                auth()->id()
-
-            )->first();
-
-            $class = ClassModel::where(
-
-                'id',
-
-                $request->class_id
-
-            )->where(
-
-                'faculty_id',
-
-                $faculty->id
-
-            )->first();
-
-            if (!$class) {
-
-                return response()->json([
-
-                    'success' => false,
-
-                    'message' => 'You can only upload notes for your own classes'
-
-                ], 403);
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | STORE FILE
-        |--------------------------------------------------------------------------
-        */
+    if ($request->hasFile('file')) {
 
         $filePath = $request->file('file')
 
             ->store('notes', 'public');
 
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE NOTE
-        |--------------------------------------------------------------------------
-        */
+    } else {
 
-        $note = Note::create([
-
-            'class_id' => $request->class_id,
-
-            'subject_id' => $request->subject_id,
-
-            'topic' => $request->topic,
-
-            'file_url' => $filePath
-        ]);
-
-        return response()->json([
-
-            'success' => true,
-
-            'message' => 'Note uploaded successfully',
-
-            'data' => $note
-
-        ], 201);
+        $filePath = $request->file_url;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE NOTE
+    |--------------------------------------------------------------------------
+    */
+
+    $note = Note::create([
+
+        'class_id' => $request->class_id,
+
+        'subject_id' => $request->subject_id,
+
+        'topic' => $request->topic,
+
+        'file_url' => $filePath
+    ]);
+
+    return response()->json([
+
+        'success' => true,
+
+        'message' => 'Note uploaded successfully',
+
+        'data' => $note
+
+    ], 201);
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -301,122 +324,145 @@ class NoteController extends Controller
     | UPDATE NOTE
     |--------------------------------------------------------------------------
     */
-    public function update(Request $request, $id)
-    {
-        $note = Note::find($id);
+  public function update(Request $request, $id)
+{
+    $note = Note::find($id);
 
-        if (!$note) {
-
-            return response()->json([
-
-                'success' => false,
-
-                'message' => 'Note not found'
-
-            ], 404);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | ONLY ADMIN AND FACULTY CAN UPDATE
-        |--------------------------------------------------------------------------
-        */
-
-        if (!in_array(auth()->user()->role_id, [2, 3])) {
-
-            return response()->json([
-
-                'success' => false,
-
-                'message' => 'Unauthorized access'
-
-            ], 403);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | FACULTY CAN ONLY UPDATE OWN CLASS NOTES
-        |--------------------------------------------------------------------------
-        */
-
-        if (auth()->user()->role_id == 2) {
-
-            $faculty = Faculty::where(
-
-                'user_id',
-
-                auth()->id()
-
-            )->first();
-
-            $class = ClassModel::where(
-
-                'id',
-
-                $note->class_id
-
-            )->where(
-
-                'faculty_id',
-
-                $faculty->id
-
-            )->first();
-
-            if (!$class) {
-
-                return response()->json([
-
-                    'success' => false,
-
-                    'message' => 'You can only update your own class notes'
-
-                ], 403);
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE FILE IF EXISTS
-        |--------------------------------------------------------------------------
-        */
-
-        $filePath = $note->file_url;
-
-        if ($request->hasFile('file')) {
-
-            $filePath = $request->file('file')
-
-                ->store('notes', 'public');
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE NOTE
-        |--------------------------------------------------------------------------
-        */
-
-        $note->update([
-
-            'class_id' => $request->class_id,
-
-            'subject_id' => $request->subject_id,
-
-            'topic' => $request->topic,
-
-            'file_url' => $filePath
-        ]);
+    if (!$note) {
 
         return response()->json([
 
-            'success' => true,
+            'success' => false,
 
-            'message' => 'Note updated successfully',
+            'message' => 'Note not found'
 
-            'data' => $note
-
-        ], 200);
+        ], 404);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    $request->validate([
+
+        'class_id' => 'required|exists:classes,id',
+
+        'subject_id' => 'required|exists:subjects,id',
+
+        'topic' => 'required',
+
+        'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx',
+
+     'file_url' => 'nullable|url'
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | ONLY ADMIN AND FACULTY CAN UPDATE
+    |--------------------------------------------------------------------------
+    */
+
+    if (!in_array(auth()->user()->role_id, [2, 3])) {
+
+        return response()->json([
+
+            'success' => false,
+
+            'message' => 'Unauthorized access'
+
+        ], 403);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FACULTY CAN ONLY UPDATE OWN CLASS NOTES
+    |--------------------------------------------------------------------------
+    */
+
+    if (auth()->user()->role_id == 2) {
+
+        $faculty = Faculty::where(
+
+            'user_id',
+
+            auth()->id()
+
+        )->first();
+
+        $class = ClassModel::where(
+
+            'id',
+
+            $note->class_id
+
+        )->where(
+
+            'faculty_id',
+
+            $faculty->id
+
+        )->first();
+
+        if (!$class) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'You can only update your own class notes'
+
+            ], 403);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILE OR URL
+    |--------------------------------------------------------------------------
+    */
+
+    $filePath = $note->file_url;
+
+    if ($request->hasFile('file')) {
+
+        $filePath = $request->file('file')
+
+            ->store('notes', 'public');
+
+    } elseif ($request->filled('file_url')) {
+
+        $filePath = $request->file_url;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE NOTE
+    |--------------------------------------------------------------------------
+    */
+
+    $note->update([
+
+        'class_id' => $request->class_id,
+
+        'subject_id' => $request->subject_id,
+
+        'topic' => $request->topic,
+
+        'file_url' => $filePath
+    ]);
+
+    return response()->json([
+
+        'success' => true,
+
+        'message' => 'Note updated successfully',
+
+        'data' => $note
+
+    ], 200);
+}
 
     /*
     |--------------------------------------------------------------------------
