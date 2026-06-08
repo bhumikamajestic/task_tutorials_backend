@@ -41,6 +41,7 @@ Route::middleware(['auth.session.api'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me',      [AuthController::class, 'user']);
+    Route::get('/enrollments/{id}', [EnrollmentController::class, 'show']);
 
     /*
     |--------------------------------------------------------------------------
@@ -55,8 +56,8 @@ Route::middleware(['auth.session.api'])->group(function () {
         // Student can fetch notes for a particular class (you already created classNotes)
         Route::get('/classes/{id}/notes', [NoteController::class, 'classNotes']);
 
+        Route::get('/my-enrollments',    [EnrollmentController::class, 'myEnrollments']);
         Route::post('/enrollments',      [EnrollmentController::class, 'store']);
-        Route::get('/enrollments/{id}',  [EnrollmentController::class, 'show']);
     });
 
     /*

@@ -19,7 +19,7 @@ class EnrollmentController extends Controller
 
             'user',
 
-            'class'
+            'class.subject'
 
         ])->get();
 
@@ -41,9 +41,11 @@ class EnrollmentController extends Controller
     */
     public function store(Request $request)
     {
+  
+
         /*
         |--------------------------------------------------------------------------
-        | ONLY STUDENTS CAN ENROLL
+        | ONLY STUDENTS CAN ENROLL 
         |--------------------------------------------------------------------------
         */
 
@@ -64,78 +66,111 @@ class EnrollmentController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $request->validate([
+      $request->validate([
+    'class_ids' => 'required_without:class_id|array|min:1',
+    'class_ids.*' => 'distinct|exists:classes,id',
 
-            'class_id' => 'required|exists:classes,id',
+    'class_id' => 'required_without:class_ids|exists:classes,id',
 
-            'dob' => 'required|date',
+    'dob' => 'required|date',
+    'address' => 'required|string'
+]);
+        $isSingleClassRequest = !$request->has('class_ids');
 
-            'address' => 'required'
-        ]);
+        $classIds = $request->has('class_ids')
+
+            ? $request->class_ids
+
+            : [$request->class_id];
 
         /*
         |--------------------------------------------------------------------------
-        | CHECK DUPLICATE ENROLLMENT
+        | CREATE ENROLLMENT REQUESTS
         |--------------------------------------------------------------------------
         */
 
-        $alreadyExists = Enrollment::where(
+        $created = [];
 
-            'user_id',
+        $skipped = [];
 
-            auth()->id()
+        foreach ($classIds as $classId) {
 
-        )->where(
+            $alreadyExists = Enrollment::where(
 
-            'class_id',
+                'user_id',
 
-            $request->class_id
+                auth()->id()
 
-        )->whereIn(
+            )->where(
 
-            'status',
+                'class_id',
 
-            ['pending', 'approved']
+                $classId
 
-        )->first();
+            )->whereIn(
 
-        if ($alreadyExists) {
+                'status',
+
+                ['pending', 'approved']
+
+            )->first();
+
+            if ($alreadyExists) {
+
+                if ($isSingleClassRequest) {
+
+                    return response()->json([
+
+                        'success' => false,
+
+                        'message' => 'You are already enrolled in this class'
+
+                    ], 400);
+                }
+
+                $skipped[] = $alreadyExists;
+
+                continue;
+            }
+
+            $created[] = Enrollment::create([
+
+                'user_id' => auth()->id(),
+
+                'class_id' => $classId,
+
+                'dob' => $request->dob,
+
+                'address' => $request->address,
+
+                'status' => 'pending'
+            ]);
+        }
+
+        if (count($created) == 0) {
 
             return response()->json([
 
                 'success' => false,
 
-                'message' => 'Already enrolled or request pending'
+                'message' => 'All selected classes are already enrolled or pending'
 
             ], 400);
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE ENROLLMENT REQUEST
-        |--------------------------------------------------------------------------
-        */
-
-        $enrollment = Enrollment::create([
-
-            'user_id' => auth()->id(),
-
-            'class_id' => $request->class_id,
-
-            'dob' => $request->dob,
-
-            'address' => $request->address,
-
-            'status' => 'pending'
-        ]);
 
         return response()->json([
 
             'success' => true,
 
-            'message' => 'Enrollment request submitted successfully',
+            'message' => 'Enrollment requests submitted successfully',
 
-            'data' => $enrollment
+            'created_count' => count($created),
+
+            'skipped_count' => count($skipped),
+
+            'created' => $created,
+
+            'skipped' => $skipped
 
         ], 201);
     }
@@ -151,7 +186,7 @@ class EnrollmentController extends Controller
 
             'user',
 
-            'class'
+            'class.subject'
 
         ])->find($id);
 
@@ -166,6 +201,29 @@ class EnrollmentController extends Controller
             ], 404);
         }
 
+        if (
+
+            auth()->user()->role_id != 3 &&
+
+            (
+
+                auth()->user()->role_id != 1 ||
+
+                $enrollment->user_id != auth()->id()
+
+            )
+
+        ) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Unauthorized access'
+
+            ], 403);
+        }
+
         return response()->json([
 
             'success' => true,
@@ -173,6 +231,39 @@ class EnrollmentController extends Controller
             'message' => 'Enrollment fetched successfully',
 
             'data' => $enrollment
+
+        ], 200);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET MY ENROLLMENTS
+    |--------------------------------------------------------------------------
+    */
+    public function myEnrollments()
+    {
+      
+        $enrollments = Enrollment::with([
+
+            'user',
+
+            'class.subject'
+
+        ])->where(
+
+            'user_id',
+
+            auth()->id()
+
+        )->get();
+
+        return response()->json([
+
+            'success' => true,
+
+            'message' => 'My enrollments fetched successfully',
+
+            'data' => $enrollments
 
         ], 200);
     }
