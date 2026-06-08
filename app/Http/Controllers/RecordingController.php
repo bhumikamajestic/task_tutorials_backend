@@ -172,6 +172,27 @@ class RecordingController extends Controller
         ], 201);
     }
 
+    // GET /faculty/recordings/{id}
+    public function facultyShow($id)
+    {
+        $recording = Recording::with('class')->find($id);
+
+        if (!$recording) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Recording not found'
+            ], 404);
+        }
+
+        $this->ensureFacultyOwnsClass($recording->class_id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Recording fetched (faculty)',
+            'data' => $recording
+        ], 200);
+    }
+
     // PUT /faculty/recordings/{id}
     public function facultyUpdate(Request $request, $id)
     {

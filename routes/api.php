@@ -357,4 +357,34 @@ Route::middleware(['auth.session.api'])->group(function () {
     */
 
     Route::apiResource('tasks', TaskController::class);
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHARED LMS ROUTES
+    |--------------------------------------------------------------------------
+    | These routes keep the same API URLs available to all authenticated roles.
+    | Controller methods enforce student/faculty/admin permissions.
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/classes/{id}', [ClassController::class, 'show']);
+
+    Route::get('/subjects',      [SubjectController::class, 'index']);
+    Route::get('/subjects/{id}', [SubjectController::class, 'show']);
+
+    Route::get('/notes',          [NoteController::class, 'index']);
+    Route::get('/notes/{id}',     [NoteController::class, 'show']);
+    Route::post('/notes',         [NoteController::class, 'store']);
+    Route::put('/notes/{id}',     [NoteController::class, 'update']);
+    Route::delete('/notes/{id}',  [NoteController::class, 'destroy']);
+
+    Route::get('/assign-homeworks',        [AssignHomeworkController::class, 'index']);
+    Route::get('/assign-homeworks/{id}',   [AssignHomeworkController::class, 'show']);
+    Route::post('/assign-homeworks',       [AssignHomeworkController::class, 'store']);
+    Route::put('/assign-homeworks/{id}',   [AssignHomeworkController::class, 'update']);
+    Route::delete('/assign-homeworks/{id}',[AssignHomeworkController::class, 'destroy']);
+
+    Route::get('/submit-homeworks',      [SubmitHomeworkController::class, 'index']);
+    Route::post('/submit-homeworks',     [SubmitHomeworkController::class, 'store']);
+    Route::put('/submit-homeworks/{id}', [SubmitHomeworkController::class, 'update']);
 });

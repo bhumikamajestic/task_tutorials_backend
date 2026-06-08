@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -30,11 +31,19 @@ class UserController extends Controller
     */
     public function store(Request $request)
     {
+        $request->validate([
+            'role_id' => 'required|exists:mas_roles,id',
+            'name' => 'required|string|max:50',
+            'email' => 'required|email|max:50|unique:users,email',
+            'password' => 'required|string|min:6',
+            'phone_no' => 'required|string|max:10',
+        ]);
+
         $user = User::create([
             'role_id' => $request->role_id,
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
             'phone_no' => $request->phone_no,
         ]);
 
@@ -84,13 +93,26 @@ class UserController extends Controller
             ], 404);
         }
 
-        $user->update([
+        $request->validate([
+            'role_id' => 'required|exists:mas_roles,id',
+            'name' => 'required|string|max:50',
+            'email' => 'required|email|max:50|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6',
+            'phone_no' => 'required|string|max:10',
+        ]);
+
+        $data = [
             'role_id' => $request->role_id,
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password,
             'phone_no' => $request->phone_no,
-        ]);
+        ];
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
 
         return response()->json([
             'success' => true,

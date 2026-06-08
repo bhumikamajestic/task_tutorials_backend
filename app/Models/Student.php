@@ -48,4 +48,9 @@ class Student extends Model
             'user_id'
         );
     }
+
+    public function submissions()
+    {
+        return $this->hasMany(SubmitHomework::class, 'student_id');
+    }
 }

@@ -46,4 +46,9 @@ class AssignHomework extends Model
     {
         return $this->belongsTo(ClassModel::class, 'class_id');
     }
+
+    public function submissions()
+    {
+        return $this->hasMany(SubmitHomework::class, 'assign_homework_id');
+    }
 }

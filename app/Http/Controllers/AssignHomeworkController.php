@@ -111,9 +111,13 @@ class AssignHomeworkController extends Controller
 
             'class_id' => 'required|exists:classes,id',
 
-            'topic' => 'required',
+            'topic' => 'required|string|max:255',
 
-            'status' => 'required'
+            'description' => 'nullable|string',
+
+            'due_date' => 'nullable|date',
+
+            'status' => 'required|string|max:30'
         ]);
 
         /*
@@ -195,6 +199,138 @@ class AssignHomeworkController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | GET SINGLE ASSIGNED HOMEWORK
+    |--------------------------------------------------------------------------
+    */
+    public function show($id)
+    {
+        $homework = AssignHomework::with(['class.subject', 'class.faculty.user'])->find($id);
+
+        if (!$homework) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Assigned homework not found'
+
+            ], 404);
+        }
+
+        if (!$this->canAccessHomework($homework)) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Unauthorized access'
+
+            ], 403);
+        }
+
+        return response()->json([
+
+            'success' => true,
+
+            'message' => 'Assigned homework fetched successfully',
+
+            'data' => $homework
+
+        ], 200);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE ASSIGNED HOMEWORK
+    |--------------------------------------------------------------------------
+    */
+    public function update(Request $request, $id)
+    {
+        $homework = AssignHomework::find($id);
+
+        if (!$homework) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Assigned homework not found'
+
+            ], 404);
+        }
+
+        if (!in_array(auth()->user()->role_id, [2, 3])) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Unauthorized access'
+
+            ], 403);
+        }
+
+        if (auth()->user()->role_id == 2 && !$this->facultyOwnsClass($homework->class_id)) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'You can only update your own class homework'
+
+            ], 403);
+        }
+
+        $request->validate([
+
+            'class_id' => 'required|exists:classes,id',
+
+            'topic' => 'required|string|max:255',
+
+            'description' => 'nullable|string',
+
+            'due_date' => 'nullable|date',
+
+            'status' => 'required|string|max:30'
+        ]);
+
+        if (auth()->user()->role_id == 2 && !$this->facultyOwnsClass($request->class_id)) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'You can only move homework within your own classes'
+
+            ], 403);
+        }
+
+        $homework->update([
+
+            'class_id' => $request->class_id,
+
+            'topic' => $request->topic,
+
+            'description' => $request->description,
+
+            'due_date' => $request->due_date,
+
+            'status' => $request->status
+        ]);
+
+        return response()->json([
+
+            'success' => true,
+
+            'message' => 'Assigned homework updated successfully',
+
+            'data' => $homework
+
+        ], 200);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | DELETE ASSIGNED HOMEWORK
     |--------------------------------------------------------------------------
     */
@@ -269,5 +405,34 @@ class AssignHomeworkController extends Controller
             'message' => 'Assigned homework deleted successfully'
 
         ], 200);
+    }
+
+    private function canAccessHomework(AssignHomework $homework)
+    {
+        if (auth()->user()->role_id == 3) {
+            return true;
+        }
+
+        if (auth()->user()->role_id == 2) {
+            return $this->facultyOwnsClass($homework->class_id);
+        }
+
+        return Enrollment::where('user_id', auth()->id())
+            ->where('class_id', $homework->class_id)
+            ->where('status', 'approved')
+            ->exists();
+    }
+
+    private function facultyOwnsClass($classId)
+    {
+        $faculty = Faculty::where('user_id', auth()->id())->first();
+
+        if (!$faculty) {
+            return false;
+        }
+
+        return ClassModel::where('id', $classId)
+            ->where('faculty_id', $faculty->id)
+            ->exists();
     }
 }

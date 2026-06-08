@@ -308,6 +308,17 @@ class NoteController extends Controller
             ], 404);
         }
 
+        if (!$this->canAccessNote($note)) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Unauthorized access'
+
+            ], 403);
+        }
+
         return response()->json([
 
             'success' => true,
@@ -412,6 +423,31 @@ class NoteController extends Controller
                 'success' => false,
 
                 'message' => 'You can only update your own class notes'
+
+            ], 403);
+        }
+
+        $newClass = ClassModel::where(
+
+            'id',
+
+            $request->class_id
+
+        )->where(
+
+            'faculty_id',
+
+            $faculty->id
+
+        )->first();
+
+        if (!$newClass) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'You can only move notes within your own classes'
 
             ], 403);
         }
@@ -605,5 +641,29 @@ class NoteController extends Controller
         'data' => $notes
 
     ], 200);
+}
+
+private function canAccessNote(Note $note)
+{
+    if (auth()->user()->role_id == 3) {
+        return true;
+    }
+
+    if (auth()->user()->role_id == 2) {
+        $faculty = Faculty::where('user_id', auth()->id())->first();
+
+        if (!$faculty) {
+            return false;
+        }
+
+        return ClassModel::where('id', $note->class_id)
+            ->where('faculty_id', $faculty->id)
+            ->exists();
+    }
+
+    return Enrollment::where('user_id', auth()->id())
+        ->where('class_id', $note->class_id)
+        ->where('status', 'approved')
+        ->exists();
 }
 }

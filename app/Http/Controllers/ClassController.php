@@ -32,6 +32,16 @@ class ClassController extends Controller
     */
     public function store(Request $request)
     {
+        $request->validate([
+            'faculty_id' => 'required|exists:faculties,id',
+            'subject_id' => 'required|exists:subjects,id',
+            'name' => 'required|string|max:20',
+            'class_link' => 'required|string|max:100',
+            'class_date' => 'required|date',
+            'start_time' => 'required',
+            'end_time' => 'required',
+        ]);
+
         $class = ClassModel::create([
             'faculty_id' => $request->faculty_id,
             'subject_id' => $request->subject_id,
@@ -65,6 +75,20 @@ class ClassController extends Controller
             ], 404);
         }
 
+        if (auth()->user()->role_id == 1) {
+            $enrollment = Enrollment::where('user_id', auth()->id())
+                ->where('class_id', $class->id)
+                ->where('status', 'approved')
+                ->first();
+
+            if (!$enrollment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not enrolled in this class'
+                ], 403);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Class fetched successfully',
@@ -87,6 +111,16 @@ class ClassController extends Controller
                 'message' => 'Class not found'
             ], 404);
         }
+
+        $request->validate([
+            'faculty_id' => 'required|exists:faculties,id',
+            'subject_id' => 'required|exists:subjects,id',
+            'name' => 'required|string|max:20',
+            'class_link' => 'required|string|max:100',
+            'class_date' => 'required|date',
+            'start_time' => 'required',
+            'end_time' => 'required',
+        ]);
 
         $class->update([
             'faculty_id' => $request->faculty_id,
