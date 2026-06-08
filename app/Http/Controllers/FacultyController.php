@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Faculty;
+use App\Models\User;
+use Illuminate\Validation\Rule;
 
 class FacultyController extends Controller
 {
@@ -30,6 +32,24 @@ class FacultyController extends Controller
     */
     public function store(Request $request)
     {
+        $request->validate([
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                Rule::unique('faculties', 'user_id'),
+                function ($attribute, $value, $fail) {
+                    $user = User::find($value);
+
+                    if ($user && $user->role_id != 2) {
+                        $fail('Selected user must have faculty role.');
+                    }
+                },
+            ],
+            'date_of_joining' => 'required|date',
+            'qualification' => 'required|string|max:100',
+            'bio' => 'nullable|string',
+        ]);
+
         $faculty = Faculty::create([
             'user_id' => $request->user_id,
             'date_of_joining' => $request->date_of_joining,
@@ -82,6 +102,24 @@ class FacultyController extends Controller
                 'message' => 'Faculty not found'
             ], 404);
         }
+
+        $request->validate([
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                Rule::unique('faculties', 'user_id')->ignore($faculty->id),
+                function ($attribute, $value, $fail) {
+                    $user = User::find($value);
+
+                    if ($user && $user->role_id != 2) {
+                        $fail('Selected user must have faculty role.');
+                    }
+                },
+            ],
+            'date_of_joining' => 'required|date',
+            'qualification' => 'required|string|max:100',
+            'bio' => 'nullable|string',
+        ]);
 
         $faculty->update([
             'user_id' => $request->user_id,

@@ -30,6 +30,11 @@ class SubjectController extends Controller
     */
     public function store(Request $request)
     {
+        $request->validate([
+            'faculty_id' => 'required|exists:faculties,id',
+            'name' => 'required|string|max:100',
+        ]);
+
         $subject = Subject::create([
             'faculty_id' => $request->faculty_id,
             'name' => $request->name,
@@ -80,6 +85,11 @@ class SubjectController extends Controller
                 'message' => 'Subject not found'
             ], 404);
         }
+
+        $request->validate([
+            'faculty_id' => 'required|exists:faculties,id',
+            'name' => 'required|string|max:100',
+        ]);
 
         $subject->update([
             'faculty_id' => $request->faculty_id,

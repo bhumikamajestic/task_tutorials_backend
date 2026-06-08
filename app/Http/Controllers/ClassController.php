@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ClassModel;
 use App\Models\Enrollment;
+use App\Models\Faculty;
 
 class ClassController extends Controller
 {
@@ -85,6 +86,24 @@ class ClassController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'You are not enrolled in this class'
+                ], 403);
+            }
+        }
+
+        if (auth()->user()->role_id == 2) {
+            $faculty = Faculty::where('user_id', auth()->id())->first();
+
+            if (!$faculty) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Faculty profile not found'
+                ], 404);
+            }
+
+            if ($class->faculty_id != $faculty->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can access only your own classes'
                 ], 403);
             }
         }

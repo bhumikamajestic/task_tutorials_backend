@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Student;
+use App\Models\User;
+use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
 {
@@ -42,37 +44,23 @@ class StudentController extends Controller
 
         $request->validate([
 
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                Rule::unique('students', 'user_id'),
+                function ($attribute, $value, $fail) {
+                    $user = User::find($value);
+
+                    if ($user && $user->role_id != 1) {
+                        $fail('Selected user must have student role.');
+                    }
+                },
+            ],
 
             'dob' => 'required|date',
 
             'address' => 'required'
         ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK EXISTING STUDENT
-        |--------------------------------------------------------------------------
-        */
-
-        $existingStudent = Student::where(
-
-            'user_id',
-
-            $request->user_id
-
-        )->first();
-
-        if ($existingStudent) {
-
-            return response()->json([
-
-                'success' => false,
-
-                'message' => 'Student already exists'
-
-            ], 409);
-        }
 
         /*
         |--------------------------------------------------------------------------

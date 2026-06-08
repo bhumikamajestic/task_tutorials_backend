@@ -60,6 +60,17 @@ class NoteController extends Controller
 
             )->first();
 
+            if (!$faculty) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'Faculty profile not found'
+
+                ], 404);
+            }
+
             $class_ids = ClassModel::where(
 
                 'faculty_id',
@@ -203,13 +214,24 @@ class NoteController extends Controller
 
     if (auth()->user()->role_id == 2) {
 
-        $faculty = Faculty::where(
+            $faculty = Faculty::where(
 
-            'user_id',
+                'user_id',
 
-            auth()->id()
+                auth()->id()
 
-        )->first();
+            )->first();
+
+        if (!$faculty) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Faculty profile not found'
+
+            ], 404);
+        }
 
         $class = ClassModel::where(
 
@@ -402,6 +424,17 @@ class NoteController extends Controller
 
         )->first();
 
+        if (!$faculty) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'message' => 'Faculty profile not found'
+
+            ], 404);
+        }
+
         $class = ClassModel::where(
 
             'id',
@@ -552,6 +585,17 @@ class NoteController extends Controller
                 auth()->id()
 
             )->first();
+
+            if (!$faculty) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'Faculty profile not found'
+
+                ], 404);
+            }
 
             $class = ClassModel::where(
 

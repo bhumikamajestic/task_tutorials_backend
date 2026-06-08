@@ -50,6 +50,17 @@ class AssignHomeworkController extends Controller
 
                 ->first();
 
+            if (!$faculty) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'Faculty profile not found'
+
+                ], 404);
+            }
+
             $class_ids = ClassModel::where('faculty_id', $faculty->id)
 
                 ->pluck('id');
@@ -148,6 +159,17 @@ class AssignHomeworkController extends Controller
             $faculty = Faculty::where('user_id', auth()->id())
 
                 ->first();
+
+            if (!$faculty) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'Faculty profile not found'
+
+                ], 404);
+            }
 
             $class = ClassModel::where('id', $request->class_id)
 
@@ -377,6 +399,17 @@ class AssignHomeworkController extends Controller
             $faculty = Faculty::where('user_id', auth()->id())
 
                 ->first();
+
+            if (!$faculty) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'Faculty profile not found'
+
+                ], 404);
+            }
 
             $class = ClassModel::where('id', $homework->class_id)
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\MasRole;
+use Illuminate\Validation\Rule;
 
 class MasRoleController extends Controller
 {
@@ -30,6 +31,10 @@ class MasRoleController extends Controller
     */
     public function store(Request $request)
     {
+        $request->validate([
+            'name' => 'required|string|max:50|unique:mas_roles,name',
+        ]);
+
         $masRole = MasRole::create([
             'name' => $request->name,
         ]);
@@ -79,6 +84,15 @@ class MasRoleController extends Controller
                 'message' => 'Mas role not found'
             ], 404);
         }
+
+        $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('mas_roles', 'name')->ignore($masRole->id),
+            ],
+        ]);
 
         $masRole->update([
             'name' => $request->name,
