@@ -408,7 +408,8 @@ class AuthController extends Controller
             } else {
                 $studentRole = MasRole::where('name', 'student')->first();
                 if (!$studentRole) {
-                    return redirect('http://localhost:5173/login?error=student_role_not_found');
+                    $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+                    return redirect($frontendUrl . '/login?error=student_role_not_found');
                 }
 
                 $user = User::create([
@@ -424,9 +425,14 @@ class AuthController extends Controller
             Auth::login($user);
             $request->session()->regenerate();
 
-            return redirect('http://localhost:5173/live');
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+            return redirect($frontendUrl . '/live');
         } catch (\Exception $e) {
-            return redirect('http://localhost:5173/login?error=oauth_failed');
+            \Illuminate\Support\Facades\Log::error('Google OAuth callback failed: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+            return redirect($frontendUrl . '/login?error=oauth_failed');
         }
     }
 }
