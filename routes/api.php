@@ -25,6 +25,9 @@ use App\Http\Controllers\EnrollmentController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 
+Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (SESSION AUTH)

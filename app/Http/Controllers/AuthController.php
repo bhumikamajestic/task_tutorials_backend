@@ -386,4 +386,47 @@ class AuthController extends Controller
 
         ], 200);
     }
+
+    public function redirectToGoogle()
+    {
+        return \Laravel\Socialite\Facades\Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')->user();
+            
+            $user = User::where('google_id', $googleUser->getId())
+                ->orWhere('email', $googleUser->getEmail())
+                ->first();
+
+            if ($user) {
+                if (!$user->google_id) {
+                    $user->update(['google_id' => $googleUser->getId()]);
+                }
+            } else {
+                $studentRole = MasRole::where('name', 'student')->first();
+                if (!$studentRole) {
+                    return redirect('http://localhost:5173/login?error=student_role_not_found');
+                }
+
+                $user = User::create([
+                    'role_id' => $studentRole->id,
+                    'name' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'google_id' => $googleUser->getId(),
+                    'password' => Hash::make(\Illuminate\Support\Str::random(24)),
+                    'phone_no' => null,
+                ]);
+            }
+
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            return redirect('http://localhost:5173/live');
+        } catch (\Exception $e) {
+            return redirect('http://localhost:5173/login?error=oauth_failed');
+        }
+    }
 }
