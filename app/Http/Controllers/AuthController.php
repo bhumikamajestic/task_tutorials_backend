@@ -386,4 +386,53 @@ class AuthController extends Controller
 
         ], 200);
     }
+
+    public function redirectToGoogle()
+    {
+        return \Laravel\Socialite\Facades\Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')->user();
+            
+            $user = User::where('google_id', $googleUser->getId())
+                ->orWhere('email', $googleUser->getEmail())
+                ->first();
+
+            if ($user) {
+                if (!$user->google_id) {
+                    $user->update(['google_id' => $googleUser->getId()]);
+                }
+            } else {
+                $studentRole = MasRole::where('name', 'student')->first();
+                if (!$studentRole) {
+                    $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+                    return redirect($frontendUrl . '/login?error=student_role_not_found');
+                }
+
+                $user = User::create([
+                    'role_id' => $studentRole->id,
+                    'name' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'google_id' => $googleUser->getId(),
+                    'password' => Hash::make(\Illuminate\Support\Str::random(24)),
+                    'phone_no' => null,
+                ]);
+            }
+
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+            return redirect($frontendUrl . '/live');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Google OAuth callback failed: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+            return redirect($frontendUrl . '/login?error=oauth_failed');
+        }
+    }
 }
